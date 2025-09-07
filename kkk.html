@@ -1,2 +1,1076 @@
-<h1>baibian</h1>
-  7878/91911313988785454848548547444747474
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐创作工坊 - 制作属于你的音乐</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5', // 主色调：深紫色，代表创造力
+                        secondary: '#EC4899', // 辅助色：粉红色，代表活力
+                        dark: '#1E1B4B', // 深色背景
+                        light: '#EEF2FF', // 浅色背景
+                        neutral: '#6B7280' // 中性色
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                },
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .key-white {
+                @apply h-48 md:h-64 w-10 md:w-12 bg-white rounded-b-lg border border-gray-300 shadow-md transition-all duration-100 hover:shadow-lg relative;
+            }
+            .key-black {
+                @apply absolute h-28 md:h-40 w-6 md:w-8 bg-gray-800 rounded-b-lg shadow-md transition-all duration-100 z-10;
+            }
+            .key-active {
+                @apply transform scale-95 shadow-inner bg-opacity-80;
+            }
+            .control-btn {
+                @apply w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2;
+            }
+            .track-item {
+                @apply bg-dark/50 rounded-lg p-3 mb-3 transition-all duration-300 hover:bg-dark/70;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gradient-to-br from-dark to-dark/80 text-light min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-dark/80 backdrop-blur-md border-b border-primary/20 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-music text-secondary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">音乐创作工坊</h1>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button id="save-project" class="hidden md:flex items-center space-x-1 px-4 py-2 bg-primary/80 hover:bg-primary rounded-lg transition-all">
+                    <i class="fa fa-save"></i>
+                    <span>保存项目</span>
+                </button>
+                <button id="export-audio" class="hidden md:flex items-center space-x-1 px-4 py-2 bg-secondary/80 hover:bg-secondary rounded-lg transition-all">
+                    <i class="fa fa-download"></i>
+                    <span>导出音频</span>
+                </button>
+                <button id="help-btn" class="p-2 rounded-full hover:bg-white/10 transition-all">
+                    <i class="fa fa-question-circle"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <!-- 欢迎提示（首次加载显示） -->
+        <div id="welcome-toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-primary/90 backdrop-blur-sm text-white px-6 py-4 rounded-lg shadow-xl z-50 flex items-center space-x-3 max-w-md">
+            <i class="fa fa-lightbulb-o text-xl"></i>
+            <div>
+                <h3 class="font-bold">欢迎使用音乐创作工坊！</h3>
+                <p class="text-sm opacity-90">使用钢琴键盘创作旋律，添加节拍，制作你的音乐作品</p>
+            </div>
+            <button id="close-welcome" class="ml-2 text-white/80 hover:text-white">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="mb-8 bg-dark/30 backdrop-blur-sm rounded-xl p-4 border border-primary/10 shadow-lg">
+            <div class="flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex flex-wrap gap-3">
+                    <button id="play-btn" class="control-btn bg-primary">
+                        <i class="fa fa-play text-xl"></i>
+                    </button>
+                    <button id="stop-btn" class="control-btn bg-neutral">
+                        <i class="fa fa-stop text-xl"></i>
+                    </button>
+                    <button id="record-btn" class="control-btn bg-red-500">
+                        <i class="fa fa-microphone text-xl"></i>
+                    </button>
+                    
+                    <div class="hidden md:flex items-center space-x-2 bg-dark/50 rounded-lg px-3 py-2">
+                        <label for="tempo" class="text-sm whitespace-nowrap">速度: </label>
+                        <input type="range" id="tempo" min="60" max="180" value="120" class="w-32 accent-primary">
+                        <span id="tempo-value" class="text-sm font-medium">120 BPM</span>
+                    </div>
+                    
+                    <div class="hidden md:flex items-center space-x-2 bg-dark/50 rounded-lg px-3 py-2">
+                        <label for="volume" class="text-sm whitespace-nowrap">音量: </label>
+                        <input type="range" id="volume" min="0" max="100" value="80" class="w-32 accent-primary">
+                        <span id="volume-value" class="text-sm font-medium">80%</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <div class="hidden md:flex items-center space-x-2 bg-dark/50 rounded-lg px-3 py-2">
+                        <label for="instrument" class="text-sm">乐器: </label>
+                        <select id="instrument" class="bg-dark/70 border border-primary/20 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                            <option value="acoustic">钢琴</option>
+                            <option value="electric">电钢琴</option>
+                            <option value="organ">管风琴</option>
+                            <option value="guitar">吉他</option>
+                            <option value="bass">贝斯</option>
+                            <option value="strings">弦乐</option>
+                            <option value="synth">合成器</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 bg-dark/50 rounded-lg px-3 py-2">
+                        <label for="metronome" class="text-sm flex items-center">
+                            <input type="checkbox" id="metronome" class="mr-1 accent-primary">
+                            节拍器
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 移动端控制项 -->
+            <div class="mt-4 md:hidden grid grid-cols-2 gap-3">
+                <div class="flex items-center space-x-2 bg-dark/50 rounded-lg px-3 py-2">
+                    <label for="tempo-mobile" class="text-sm whitespace-nowrap">速度: </label>
+                    <input type="range" id="tempo-mobile" min="60" max="180" value="120" class="w-full accent-primary">
+                    <span id="tempo-value-mobile" class="text-sm font-medium">120 BPM</span>
+                </div>
+                
+                <div class="flex items-center space-x-2 bg-dark/50 rounded-lg px-3 py-2">
+                    <label for="volume-mobile" class="text-sm whitespace-nowrap">音量: </label>
+                    <input type="range" id="volume-mobile" min="0" max="100" value="80" class="w-full accent-primary">
+                    <span id="volume-value-mobile" class="text-sm font-medium">80%</span>
+                </div>
+                
+                <div class="flex items-center space-x-2 bg-dark/50 rounded-lg px-3 py-2 col-span-2">
+                    <label for="instrument-mobile" class="text-sm w-20">乐器: </label>
+                    <select id="instrument-mobile" class="bg-dark/70 border border-primary/20 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary w-full">
+                        <option value="acoustic">钢琴</option>
+                        <option value="electric">电钢琴</option>
+                        <option value="organ">管风琴</option>
+                        <option value="guitar">吉他</option>
+                        <option value="bass">贝斯</option>
+                        <option value="strings">弦乐</option>
+                        <option value="synth">合成器</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 钢琴键盘区域 -->
+        <div class="mb-8 bg-dark/30 backdrop-blur-sm rounded-xl p-4 border border-primary/10 shadow-lg overflow-x-auto">
+            <h2 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fa fa-keyboard-o mr-2 text-primary"></i>虚拟钢琴
+            </h2>
+            
+            <div class="flex justify-center relative h-48 md:h-64 px-4" id="piano-keys">
+                <!-- 白键 -->
+                <div class="key-white" data-note="C4" data-key="a"></div>
+                <div class="key-white" data-note="D4" data-key="s"></div>
+                <div class="key-white" data-note="E4" data-key="d"></div>
+                <div class="key-white" data-note="F4" data-key="f"></div>
+                <div class="key-white" data-note="G4" data-key="g"></div>
+                <div class="key-white" data-note="A4" data-key="h"></div>
+                <div class="key-white" data-note="B4" data-key="j"></div>
+                <div class="key-white" data-note="C5" data-key="k"></div>
+                <div class="key-white" data-note="D5" data-key="l"></div>
+                <div class="key-white" data-note="E5" data-key=";"></div>
+                
+                <!-- 黑键 -->
+                <div class="key-black ml-7" data-note="C#4" data-key="w"></div>
+                <div class="key-black ml-4" data-note="D#4" data-key="e"></div>
+                <div class="key-black ml-16" data-note="F#4" data-key="t"></div>
+                <div class="key-black ml-4" data-note="G#4" data-key="y"></div>
+                <div class="key-black ml-4" data-note="A#4" data-key="u"></div>
+                <div class="key-black ml-16" data-note="C#5" data-key="o"></div>
+                <div class="key-black ml-4" data-note="D#5" data-key="p"></div>
+            </div>
+            
+            <div class="mt-4 grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
+                <div class="bg-dark/50 p-2 rounded-lg">
+                    <p class="font-medium text-primary">键盘快捷键</p>
+                    <p>使用 A, S, D, F, G, H, J, K, L, ; 键演奏白键</p>
+                </div>
+                <div class="bg-dark/50 p-2 rounded-lg">
+                    <p class="font-medium text-secondary">黑键快捷键</p>
+                    <p>使用 W, E, T, Y, U, O, P 键演奏黑键</p>
+                </div>
+                <div class="bg-dark/50 p-2 rounded-lg col-span-2 md:col-span-1">
+                    <p class="font-medium">播放/暂停: <kbd class="px-1.5 py-0.5 bg-black rounded text-xs">空格</kbd></p>
+                </div>
+                <div class="bg-dark/50 p-2 rounded-lg col-span-2 md:col-span-1">
+                    <p class="font-medium">录音: <kbd class="px-1.5 py-0.5 bg-black rounded text-xs">R</kbd></p>
+                </div>
+                <div class="bg-dark/50 p-2 rounded-lg col-span-2 md:col-span-1">
+                    <p class="font-medium">停止: <kbd class="px-1.5 py-0.5 bg-black rounded text-xs">Esc</kbd></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 音轨和时间线区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- 音轨列表 -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="bg-dark/30 backdrop-blur-sm rounded-xl p-4 border border-primary/10 shadow-lg">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-list mr-2 text-primary"></i>音轨列表
+                    </h2>
+                    
+                    <div id="tracks-list" class="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                        <div class="track-item flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fa fa-music text-primary mr-2"></i>
+                                <span>主音轨</span>
+                            </div>
+                            <div class="flex space-x-1">
+                                <button class="track-play p-1.5 rounded hover:bg-white/10" title="播放此音轨">
+                                    <i class="fa fa-play"></i>
+                                </button>
+                                <button class="track-mute p-1.5 rounded hover:bg-white/10" title="静音此音轨">
+                                    <i class="fa fa-volume-up"></i>
+                                </button>
+                                <button class="track-delete p-1.5 rounded hover:bg-white/10 text-red-400" title="删除此音轨">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="track-item flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fa fa-drum text-secondary mr-2"></i>
+                                <span>节拍音轨</span>
+                            </div>
+                            <div class="flex space-x-1">
+                                <button class="track-play p-1.5 rounded hover:bg-white/10" title="播放此音轨">
+                                    <i class="fa fa-play"></i>
+                                </button>
+                                <button class="track-mute p-1.5 rounded hover:bg-white/10" title="静音此音轨">
+                                    <i class="fa fa-volume-up"></i>
+                                </button>
+                                <button class="track-delete p-1.5 rounded hover:bg-white/10 text-red-400" title="删除此音轨">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="add-track" class="mt-4 w-full py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-all flex items-center justify-center">
+                        <i class="fa fa-plus mr-2"></i>添加新音轨
+                    </button>
+                </div>
+                
+                <!-- 音效库 -->
+                <div class="bg-dark/30 backdrop-blur-sm rounded-xl p-4 border border-primary/10 shadow-lg">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-soundcloud mr-2 text-secondary"></i>音效库
+                    </h2>
+                    
+                    <div class="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                        <div class="bg-dark/50 p-2 rounded-lg hover:bg-dark/70 transition-all cursor-pointer flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fa fa-drum text-secondary mr-2"></i>
+                                <span>鼓点 1</span>
+                            </div>
+                            <button class="add-sound p-1.5 rounded hover:bg-white/10">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="bg-dark/50 p-2 rounded-lg hover:bg-dark/70 transition-all cursor-pointer flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fa fa-drum text-secondary mr-2"></i>
+                                <span>鼓点 2</span>
+                            </div>
+                            <button class="add-sound p-1.5 rounded hover:bg-white/10">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="bg-dark/50 p-2 rounded-lg hover:bg-dark/70 transition-all cursor-pointer flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fa fa-music text-primary mr-2"></i>
+                                <span>贝斯线 1</span>
+                            </div>
+                            <button class="add-sound p-1.5 rounded hover:bg-white/10">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="bg-dark/50 p-2 rounded-lg hover:bg-dark/70 transition-all cursor-pointer flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fa fa-music text-primary mr-2"></i>
+                                <span>和弦进行 1</span>
+                            </div>
+                            <button class="add-sound p-1.5 rounded hover:bg-white/10">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 时间线和音轨编辑 -->
+            <div class="lg:col-span-3">
+                <div class="bg-dark/30 backdrop-blur-sm rounded-xl p-4 border border-primary/10 shadow-lg h-full">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-timeline mr-2 text-primary"></i>时间线编辑
+                    </h2>
+                    
+                    <!-- 时间刻度 -->
+                    <div class="flex mb-2 text-xs text-center text-gray-400">
+                        <div class="w-16"></div>
+                        <div class="flex-1 grid grid-cols-8">
+                            <div>1</div>
+                            <div>2</div>
+                            <div>3</div>
+                            <div>4</div>
+                            <div>5</div>
+                            <div>6</div>
+                            <div>7</div>
+                            <div>8</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 小节线 -->
+                    <div class="flex mb-4">
+                        <div class="w-16"></div>
+                        <div class="flex-1 h-1 bg-gray-700 flex">
+                            <div class="w-1/8 border-r border-gray-500"></div>
+                            <div class="w-1/8 border-r border-gray-500"></div>
+                            <div class="w-1/8 border-r border-gray-500"></div>
+                            <div class="w-1/8 border-r border-gray-500"></div>
+                            <div class="w-1/8 border-r border-gray-500"></div>
+                            <div class="w-1/8 border-r border-gray-500"></div>
+                            <div class="w-1/8 border-r border-gray-500"></div>
+                            <div class="w-1/8"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 播放头 -->
+                    <div id="playhead" class="absolute top-[400px] left-[100px] w-0.5 h-[300px] bg-secondary z-10 hidden"></div>
+                    
+                    <!-- 主音轨时间线 -->
+                    <div class="relative mb-4">
+                        <div class="flex">
+                            <div class="w-16 flex items-center pr-2 text-sm">主音轨</div>
+                            <div class="flex-1 h-24 bg-dark/50 rounded overflow-hidden relative" id="main-track">
+                                <!-- 音符块将在这里动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 节拍音轨时间线 -->
+                    <div class="relative mb-4">
+                        <div class="flex">
+                            <div class="w-16 flex items-center pr-2 text-sm">节拍音轨</div>
+                            <div class="flex-1 h-24 bg-dark/50 rounded overflow-hidden" id="beat-track">
+                                <div class="flex h-full">
+                                    <div class="w-1/8 h-full border-r border-gray-700 flex items-center justify-center">
+                                        <div class="w-4 h-4 bg-secondary rounded-full"></div>
+                                    </div>
+                                    <div class="w-1/8 h-full border-r border-gray-700 flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                    </div>
+                                    <div class="w-1/8 h-full border-r border-gray-700 flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                    </div>
+                                    <div class="w-1/8 h-full border-r border-gray-700 flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                    </div>
+                                    <div class="w-1/8 h-full border-r border-gray-700 flex items-center justify-center">
+                                        <div class="w-4 h-4 bg-secondary rounded-full"></div>
+                                    </div>
+                                    <div class="w-1/8 h-full border-r border-gray-700 flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                    </div>
+                                    <div class="w-1/8 h-full border-r border-gray-700 flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                    </div>
+                                    <div class="w-1/8 h-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 时间线控制 -->
+                    <div class="mt-4 flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1.5 bg-dark/50 hover:bg-dark/70 rounded text-sm transition-all">
+                                <i class="fa fa-cut mr-1"></i>剪切
+                            </button>
+                            <button class="px-3 py-1.5 bg-dark/50 hover:bg-dark/70 rounded text-sm transition-all">
+                                <i class="fa fa-copy mr-1"></i>复制
+                            </button>
+                            <button class="px-3 py-1.5 bg-dark/50 hover:bg-dark/70 rounded text-sm transition-all">
+                                <i class="fa fa-paste mr-1"></i>粘贴
+                            </button>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1.5 bg-dark/50 hover:bg-dark/70 rounded text-sm transition-all">
+                                <i class="fa fa-search-minus mr-1"></i>缩小
+                            </button>
+                            <button class="px-3 py-1.5 bg-dark/50 hover:bg-dark/70 rounded text-sm transition-all">
+                                <i class="fa fa-search-plus mr-1"></i>放大
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部状态栏 -->
+    <footer class="bg-dark/80 backdrop-blur-md border-t border-primary/20 py-3 mt-8">
+        <div class="container mx-auto px-4 flex flex-wrap justify-between items-center text-sm text-gray-400">
+            <div>
+                <span id="play-time">00:00 / 00:00</span>
+            </div>
+            
+            <div class="mt-2 sm:mt-0">
+                <span>音乐创作工坊 v1.0</span>
+                <span class="mx-2">•</span>
+                <a href="#" class="hover:text-primary transition-colors">使用帮助</a>
+                <span class="mx-2">•</span>
+                <a href="#" class="hover:text-primary transition-colors">隐私政策</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 帮助模态框 -->
+    <div id="help-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-dark border border-primary/30 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto m-4">
+            <div class="p-4 border-b border-primary/20 flex justify-between items-center">
+                <h2 class="text-xl font-bold flex items-center">
+                    <i class="fa fa-question-circle text-primary mr-2"></i>使用帮助
+                </h2>
+                <button id="close-help" class="p-2 hover:bg-white/10 rounded-full">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-primary mb-2">基本操作</h3>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>点击钢琴键盘或使用对应的键盘按键演奏音符</li>
+                        <li>点击"录制"按钮开始录制你的演奏</li>
+                        <li>使用播放/暂停按钮控制播放</li>
+                        <li>调整速度和音量滑块来改变音乐效果</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-primary mb-2">音轨管理</h3>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>点击"添加新音轨"创建多个音轨层</li>
+                        <li>使用音轨旁的按钮控制单个音轨的播放、静音和删除</li>
+                        <li>从音效库添加预设音效到你的项目中</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-primary mb-2">快捷键</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div class="bg-dark/50 p-2 rounded">
+                            <kbd class="px-1.5 py-0.5 bg-black rounded text-xs mr-1">空格</kbd>
+                            <span>播放/暂停</span>
+                        </div>
+                        <div class="bg-dark/50 p-2 rounded">
+                            <kbd class="px-1.5 py-0.5 bg-black rounded text-xs mr-1">R</kbd>
+                            <span>开始/停止录音</span>
+                        </div>
+                        <div class="bg-dark/50 p-2 rounded">
+                            <kbd class="px-1.5 py-0.5 bg-black rounded text-xs mr-1">Esc</kbd>
+                            <span>停止播放</span>
+                        </div>
+                        <div class="bg-dark/50 p-2 rounded">
+                            <kbd class="px-1.5 py-0.5 bg-black rounded text-xs mr-1">Ctrl+S</kbd>
+                            <span>保存项目</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 音乐创作工具的核心功能实现
+        document.addEventListener('DOMContentLoaded', function() {
+            // Web Audio API 初始化
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            let isPlaying = false;
+            let isRecording = false;
+            let currentTime = 0;
+            let playbackInterval;
+            let recordedNotes = [];
+            let tempo = 120; // BPM
+            let volume = 0.8; // 0-1
+            let selectedInstrument = 'acoustic';
+            
+            // DOM 元素引用
+            const playBtn = document.getElementById('play-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const recordBtn = document.getElementById('record-btn');
+            const tempoSlider = document.getElementById('tempo');
+            const tempoSliderMobile = document.getElementById('tempo-mobile');
+            const tempoValue = document.getElementById('tempo-value');
+            const tempoValueMobile = document.getElementById('tempo-value-mobile');
+            const volumeSlider = document.getElementById('volume');
+            const volumeSliderMobile = document.getElementById('volume-mobile');
+            const volumeValue = document.getElementById('volume-value');
+            const volumeValueMobile = document.getElementById('volume-value-mobile');
+            const instrumentSelect = document.getElementById('instrument');
+            const instrumentSelectMobile = document.getElementById('instrument-mobile');
+            const metronomeCheckbox = document.getElementById('metronome');
+            const playhead = document.getElementById('playhead');
+            const playTimeDisplay = document.getElementById('play-time');
+            const pianoKeys = document.querySelectorAll('#piano-keys [data-note]');
+            const mainTrack = document.getElementById('main-track');
+            const addTrackBtn = document.getElementById('add-track');
+            const tracksList = document.getElementById('tracks-list');
+            const welcomeToast = document.getElementById('welcome-toast');
+            const closeWelcomeBtn = document.getElementById('close-welcome');
+            const helpBtn = document.getElementById('help-btn');
+            const helpModal = document.getElementById('help-modal');
+            const closeHelpBtn = document.getElementById('close-help');
+            
+            // 音符频率映射表
+            const noteFrequencies = {
+                'C4': 261.63,
+                'C#4': 277.18,
+                'D4': 293.66,
+                'D#4': 311.13,
+                'E4': 329.63,
+                'F4': 349.23,
+                'F#4': 369.99,
+                'G4': 392.00,
+                'G#4': 415.30,
+                'A4': 440.00,
+                'A#4': 466.16,
+                'B4': 493.88,
+                'C5': 523.25,
+                'C#5': 554.37,
+                'D5': 587.33,
+                'D#5': 622.25,
+                'E5': 659.25
+            };
+            
+            // 键盘映射
+            const keyMap = {
+                'a': 'C4',
+                's': 'D4',
+                'd': 'E4',
+                'f': 'F4',
+                'g': 'G4',
+                'h': 'A4',
+                'j': 'B4',
+                'k': 'C5',
+                'l': 'D5',
+                ';': 'E5',
+                'w': 'C#4',
+                'e': 'D#4',
+                't': 'F#4',
+                'y': 'G#4',
+                'u': 'A#4',
+                'o': 'C#5',
+                'p': 'D#5'
+            };
+            
+            // 初始化
+            function init() {
+                // 检查是否是首次访问
+                if (!localStorage.getItem('musicMakerVisited')) {
+                    welcomeToast.classList.remove('hidden');
+                    localStorage.setItem('musicMakerVisited', 'true');
+                } else {
+                    welcomeToast.classList.add('hidden');
+                }
+                
+                // 绑定事件监听器
+                bindEventListeners();
+            }
+            
+            // 绑定事件监听器
+            function bindEventListeners() {
+                // 播放/暂停按钮
+                playBtn.addEventListener('click', togglePlayback);
+                
+                // 停止按钮
+                stopBtn.addEventListener('click', stopPlayback);
+                
+                // 录音按钮
+                recordBtn.addEventListener('click', toggleRecording);
+                
+                // 速度控制
+                tempoSlider.addEventListener('input', function() {
+                    tempo = parseInt(this.value);
+                    tempoValue.textContent = `${tempo} BPM`;
+                    tempoSliderMobile.value = tempo;
+                    tempoValueMobile.textContent = `${tempo} BPM`;
+                });
+                
+                tempoSliderMobile.addEventListener('input', function() {
+                    tempo = parseInt(this.value);
+                    tempoValueMobile.textContent = `${tempo} BPM`;
+                    tempoSlider.value = tempo;
+                    tempoValue.textContent = `${tempo} BPM`;
+                });
+                
+                // 音量控制
+                volumeSlider.addEventListener('input', function() {
+                    volume = parseInt(this.value) / 100;
+                    volumeValue.textContent = `${parseInt(this.value)}%`;
+                    volumeSliderMobile.value = this.value;
+                    volumeValueMobile.textContent = `${parseInt(this.value)}%`;
+                });
+                
+                volumeSliderMobile.addEventListener('input', function() {
+                    volume = parseInt(this.value) / 100;
+                    volumeValueMobile.textContent = `${parseInt(this.value)}%`;
+                    volumeSlider.value = this.value;
+                    volumeValue.textContent = `${parseInt(this.value)}%`;
+                });
+                
+                // 乐器选择
+                instrumentSelect.addEventListener('change', function() {
+                    selectedInstrument = this.value;
+                    instrumentSelectMobile.value = this.value;
+                });
+                
+                instrumentSelectMobile.addEventListener('change', function() {
+                    selectedInstrument = this.value;
+                    instrumentSelect.value = this.value;
+                });
+                
+                // 钢琴键点击事件
+                pianoKeys.forEach(key => {
+                    key.addEventListener('mousedown', function() {
+                        const note = this.getAttribute('data-note');
+                        playNote(note);
+                        this.classList.add('key-active');
+                    });
+                    
+                    key.addEventListener('mouseup', function() {
+                        this.classList.remove('key-active');
+                    });
+                    
+                    key.addEventListener('mouseleave', function() {
+                        if (this.classList.contains('key-active')) {
+                            this.classList.remove('key-active');
+                        }
+                    });
+                });
+                
+                // 键盘事件
+                document.addEventListener('keydown', function(e) {
+                    // 空格键播放/暂停
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        togglePlayback();
+                        return;
+                    }
+                    
+                    // R键录音
+                    if (e.key === 'r' || e.key === 'R') {
+                        toggleRecording();
+                        return;
+                    }
+                    
+                    // Esc键停止
+                    if (e.key === 'Escape') {
+                        stopPlayback();
+                        return;
+                    }
+                    
+                    // 音符按键
+                    const note = keyMap[e.key.toLowerCase()];
+                    if (note) {
+                        e.preventDefault();
+                        playNote(note);
+                        
+                        // 高亮对应的琴键
+                        pianoKeys.forEach(key => {
+                            if (key.getAttribute('data-note') === note && !key.classList.contains('key-active')) {
+                                key.classList.add('key-active');
+                            }
+                        });
+                    }
+                });
+                
+                document.addEventListener('keyup', function(e) {
+                    const note = keyMap[e.key.toLowerCase()];
+                    if (note) {
+                        // 移除琴键高亮
+                        pianoKeys.forEach(key => {
+                            if (key.getAttribute('data-note') === note) {
+                                key.classList.remove('key-active');
+                            }
+                        });
+                    }
+                });
+                
+                // 添加新音轨
+                addTrackBtn.addEventListener('click', addNewTrack);
+                
+                // 关闭欢迎提示
+                closeWelcomeBtn.addEventListener('click', function() {
+                    welcomeToast.classList.add('hidden');
+                });
+                
+                // 帮助模态框
+                helpBtn.addEventListener('click', function() {
+                    helpModal.classList.remove('hidden');
+                    helpModal.classList.add('flex');
+                });
+                
+                closeHelpBtn.addEventListener('click', function() {
+                    helpModal.classList.add('hidden');
+                    helpModal.classList.remove('flex');
+                });
+                
+                // 点击模态框外部关闭
+                helpModal.addEventListener('click', function(e) {
+                    if (e.target === helpModal) {
+                        helpModal.classList.add('hidden');
+                        helpModal.classList.remove('flex');
+                    }
+                });
+            }
+            
+            // 播放音符
+            function playNote(note, time = 0) {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                const frequency = noteFrequencies[note];
+                if (!frequency) return;
+                
+                // 创建振荡器和增益节点
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                // 设置音量
+                gainNode.gain.value = volume;
+                
+                // 根据所选乐器设置不同的波形
+                switch(selectedInstrument) {
+                    case 'acoustic':
+                    case 'electric':
+                        oscillator.type = 'sine';
+                        break;
+                    case 'organ':
+                        oscillator.type = 'square';
+                        break;
+                    case 'guitar':
+                    case 'bass':
+                        oscillator.type = 'sawtooth';
+                        break;
+                    case 'strings':
+                        oscillator.type = 'triangle';
+                        break;
+                    case 'synth':
+                        oscillator.type = 'square';
+                        // 添加滤波器使合成器音色更丰富
+                        const filter = audioContext.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.value = 3000;
+                        oscillator.connect(filter);
+                        filter.connect(gainNode);
+                        break;
+                    default:
+                        oscillator.type = 'sine';
+                }
+                
+                if (selectedInstrument !== 'synth') {
+                    oscillator.connect(gainNode);
+                }
+                
+                gainNode.connect(audioContext.destination);
+                
+                // 设置频率和开始时间
+                oscillator.frequency.value = frequency;
+                oscillator.start(audioContext.currentTime + time);
+                
+                // 设置音符持续时间
+                let duration = 0.5; // 默认持续时间
+                oscillator.stop(audioContext.currentTime + time + duration);
+                
+                // 如果正在录音，记录音符
+                if (isRecording) {
+                    recordedNotes.push({
+                        note,
+                        time: currentTime + time,
+                        duration
+                    });
+                    
+                    // 在时间线上添加音符可视化
+                    addNoteToTimeline(note, currentTime + time, duration);
+                }
+            }
+            
+            // 播放节拍器
+            function playMetronomeBeat(beatNumber) {
+                if (!metronomeCheckbox.checked) return;
+                
+                const gainNode = audioContext.createGain();
+                gainNode.gain.value = volume * 0.7;
+                gainNode.connect(audioContext.destination);
+                
+                const oscillator = audioContext.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = beatNumber === 1 ? 880 : 440; // 第一拍声音更高
+                oscillator.connect(gainNode);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }
+            
+            // 切换播放/暂停
+            function togglePlayback() {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                if (isPlaying) {
+                    pausePlayback();
+                } else {
+                    startPlayback();
+                }
+            }
+            
+            // 开始播放
+            function startPlayback() {
+                isPlaying = true;
+                playBtn.innerHTML = '<i class="fa fa-pause text-xl"></i>';
+                playBtn.classList.remove('bg-primary');
+                playBtn.classList.add('bg-secondary');
+                
+                // 显示播放头
+                playhead.classList.remove('hidden');
+                
+                // 计算每拍的毫秒数
+                const msPerBeat = (60 / tempo) * 1000;
+                let beatCount = 1;
+                
+                // 启动播放循环
+                playbackInterval = setInterval(() => {
+                    currentTime += msPerBeat / 1000; // 转换为秒
+                    
+                    // 更新播放时间显示
+                    updatePlayTimeDisplay();
+                    
+                    // 移动播放头
+                    movePlayhead();
+                    
+                    // 播放节拍器
+                    playMetronomeBeat(beatCount);
+                    
+                    // 播放当前时间点的音符
+                    playNotesAtCurrentTime();
+                    
+                    // 更新节拍计数
+                    beatCount = (beatCount % 4) + 1; // 4/4拍
+                }, msPerBeat);
+            }
+            
+            // 暂停播放
+            function pausePlayback() {
+                isPlaying = false;
+                clearInterval(playbackInterval);
+                playBtn.innerHTML = '<i class="fa fa-play text-xl"></i>';
+                playBtn.classList.remove('bg-secondary');
+                playBtn.classList.add('bg-primary');
+            }
+            
+            // 停止播放
+            function stopPlayback() {
+                pausePlayback();
+                currentTime = 0;
+                updatePlayTimeDisplay();
+                movePlayhead(true); // 重置播放头位置
+                playhead.classList.add('hidden');
+            }
+            
+            // 切换录音状态
+            function toggleRecording() {
+                if (isRecording) {
+                    stopRecording();
+                } else {
+                    startRecording();
+                }
+            }
+            
+            // 开始录音
+            function startRecording() {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                isRecording = true;
+                recordedNotes = [];
+                recordBtn.classList.add('animate-pulse');
+                recordBtn.innerHTML = '<i class="fa fa-stop text-xl"></i>';
+                
+                // 清空主音轨
+                while (mainTrack.firstChild) {
+                    mainTrack.removeChild(mainTrack.firstChild);
+                }
+                
+                // 如果没有在播放，开始播放
+                if (!isPlaying) {
+                    startPlayback();
+                }
+            }
+            
+            // 停止录音
+            function stopRecording() {
+                isRecording = false;
+                recordBtn.classList.remove('animate-pulse');
+                recordBtn.innerHTML = '<i class="fa fa-microphone text-xl"></i>';
+            }
+            
+            // 在当前时间播放音符
+            function playNotesAtCurrentTime() {
+                // 查找应该在当前时间播放的音符
+                const notesToPlay = recordedNotes.filter(note => 
+                    Math.abs(note.time - currentTime) < 0.05 // 允许微小的时间误差
+                );
+                
+                notesToPlay.forEach(note => {
+                    playNote(note.note);
+                });
+            }
+            
+            // 添加音符到时间线
+            function addNoteToTimeline(note, time, duration) {
+                // 计算音符在时间线上的位置和宽度
+                const totalDuration = 8; // 8拍
+                const position = (time / totalDuration) * 100;
+                const noteWidth = (duration / totalDuration) * 100;
+                
+                // 创建音符元素
+                const noteElement = document.createElement('div');
+                noteElement.className = 'absolute h-16 rounded-md shadow-md flex items-center justify-center text-xs font-medium text-white';
+                noteElement.style.left = `${position}%`;
+                noteElement.style.width = `${noteWidth}%`;
+                noteElement.style.backgroundColor = getRandomPastelColor();
+                noteElement.textContent = note;
+                
+                // 添加到主音轨
+                mainTrack.appendChild(noteElement);
+            }
+            
+            // 生成随机柔和颜色
+            function getRandomPastelColor() {
+                const hue = Math.floor(Math.random() * 360);
+                return `hsl(${hue}, 70%, 60%)`;
+            }
+            
+            // 移动播放头
+            function movePlayhead(reset = false) {
+                if (reset) {
+                    playhead.style.left = '4rem'; // 重置到开始位置
+                    return;
+                }
+                
+                // 计算播放头位置 (总时长为8拍)
+                const totalDuration = 8; // 8拍
+                const percentage = (currentTime / totalDuration) * 100;
+                const trackElement = document.querySelector('#main-track').parentElement.parentElement;
+                const trackWidth = trackElement.offsetWidth;
+                
+                // 设置播放头位置
+                const leftPosition = 4 * 16 + (percentage / 100) * trackWidth; // 4rem 转换为像素 (1rem=16px)
+                playhead.style.left = `${leftPosition}px`;
+            }
+            
+            // 更新播放时间显示
+            function updatePlayTimeDisplay() {
+                const totalSeconds = 8 * (60 / tempo); // 8拍的总秒数
+                const currentMinutes = Math.floor(currentTime / 60);
+                const currentSeconds = Math.floor(currentTime % 60);
+                const totalMinutes = Math.floor(totalSeconds / 60);
+                const totalSecondsRemaining = Math.floor(totalSeconds % 60);
+                
+                playTimeDisplay.textContent = `${currentMinutes.toString().padStart(2, '0')}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes.toString().padStart(2, '0')}:${totalSecondsRemaining.toString().padStart(2, '0')}`;
+            }
+            
+            // 添加新音轨
+            function addNewTrack() {
+                const trackCount = tracksList.children.length + 1;
+                const newTrack = document.createElement('div');
+                newTrack.className = 'track-item flex items-center justify-between';
+                newTrack.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fa fa-music text-primary mr-2"></i>
+                        <span>音轨 ${trackCount}</span>
+                    </div>
+                    <div class="flex space-x-1">
+                        <button class="track-play p-1.5 rounded hover:bg-white/10" title="播放此音轨">
+                            <i class="fa fa-play"></i>
+                        </button>
+                        <button class="track-mute p-1.5 rounded hover:bg-white/10" title="静音此音轨">
+                            <i class="fa fa-volume-up"></i>
+                        </button>
+                        <button class="track-delete p-1.5 rounded hover:bg-white/10 text-red-400" title="删除此音轨">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                // 添加删除功能
+                newTrack.querySelector('.track-delete').addEventListener('click', function() {
+                    if (confirm('确定要删除这个音轨吗？')) {
+                        tracksList.removeChild(newTrack);
+                        // 更新音轨编号
+                        updateTrackNumbers();
+                    }
+                });
+                
+                // 添加静音功能
+                const muteBtn = newTrack.querySelector('.track-mute');
+                muteBtn.addEventListener('click', function() {
+                    if (this.innerHTML.includes('volume-up')) {
+                        this.innerHTML = '<i class="fa fa-volume-off"></i>';
+                    } else {
+                        this.innerHTML = '<i class="fa fa-volume-up"></i>';
+                    }
+                });
+                
+                tracksList.appendChild(newTrack);
+            }
+            
+            // 更新音轨编号
+            function updateTrackNumbers() {
+                const tracks = tracksList.querySelectorAll('.track-item');
+                tracks.forEach((track, index) => {
+                    const trackNumber = index + 1;
+                    track.querySelector('span').textContent = `音轨 ${trackNumber}`;
+                });
+            }
+            
+            // 初始化应用
+            init();
+        });
+    </script>
+</body>
+</html>
